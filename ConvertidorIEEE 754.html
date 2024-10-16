@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Convertidor de bases</title>
+</head>
+<body bgcolor="Blueling">
+    <div class="container" id="decimal ">
+        <h1>Conversor</h1>
+        Base Decimal:<input type="number" id="decimalInput" placeholder="Introduce un número" />
+        <button onclick="Convertir()">Convertir</button>
+        <button onclick="Limpiar()">Limpiar</button>
+        <h2>Resultado:</h2>
+        Binario:<div id="ieeeResult" class="result"></div>
+        <div id="decimalToIEEEError" class="error"></div>
+        Hexadecimal:<div id="ieeeResult2" class="result"></div>
+        <div id="decimalToIEEEError2" class="error"></div>
+    </div>
+    <script>
+        function decimaltobinary(numero){
+            // Paso 1: Determinar el signo
+            let signo = '0';
+            if (numero < 0) {
+                signo = '1';
+                numero = Math.abs(numero);
+            }
+            // Paso 2: Separar la parte entera y fraccionaria
+            let parteEntera = Math.floor(numero);
+            let parteFraccionaria = numero - parteEntera;
+            // Paso 3: Convertir la parte entera a binario
+            let binarioEntero = parteEntera.toString(2);
+            if (binarioEntero === '') binarioEntero = '0';
+            // Paso 4: Convertir la parte fraccionaria a binario
+            let binarioFraccion = '';
+            while (parteFraccionaria > 0 && binarioFraccion.length < 24) { // +1 para posible bit extra
+                parteFraccionaria *= 2;
+                let bit = Math.floor(parteFraccionaria);
+                binarioFraccion += bit.toString();
+                parteFraccionaria -= bit;
+            }
+            // Paso 5: Normalizar el número binario
+            let posicion;
+            let binarioNormalizado;
+            if (parteEntera !== 0) {
+                posicion = binarioEntero.length - 1;
+                binarioNormalizado = binarioEntero + binarioFraccion;
+            } else {
+                let firstOne = binarioFraccion.indexOf('1');
+                if (firstOne === -1) {
+                    // El número es 0
+                    return '0'.repeat(32);
+                }
+                posicion = -(firstOne + 1);
+                binarioNormalizado = binarioFraccion.slice(firstOne);
+            }
+            // Paso 6: Calcular el exponente con bias (127 para precisión simple)
+            let bias = 127;
+            let exponente = posicion + bias;
+            let binarioExponente = exponente.toString(2).padStart(8, '0');
+            // Paso 7: Obtener la mantisa (23 bits después del primer '1')
+            let mantisa = binarioNormalizado.slice(1, 24); // Excluir el primer '1'
+            mantisa = mantisa.padEnd(23, '0'); // Rellenar con ceros si es necesario
+            // Paso 8: Combinar signo, exponente y mantisa
+            let ieee754 = signo + binarioExponente + mantisa;
+            return ieee754;
+        }
+        function decimalhexa(numero){
+            let signo = '0';
+            if (numero < 0) {
+                signo = '1';
+                numero = Math.abs(numero);
+            }
+            // Paso 1: Separar la parte entera y fraccionaria
+            let parteEntera = Math.floor(numero);
+            let parteFraccionaria = numero - parteEntera;
+            // Paso 2: Convertir la parte entera a hexa
+            let HexaEntero = parteEntera.toString(16);
+            // Paso 3: convertir la parte franccionaria a hexa
+            // Paso 4: Convertir la parte fraccionaria a hexadecimal
+            let hexFraccion = '';
+            while (parteFraccionaria > 0 && hexFraccion.length < 6) { // Máximo de 6 dígitos hexadecimales
+                parteFraccionaria *= 16;
+                let digito = Math.floor(parteFraccionaria);
+                hexFraccion += digito.toString(16).toUpperCase(); // Convertir a hexadecimal y a mayúsculas
+            }
+
+            let hexa = HexaEntero + hexFraccion;
+            return hexa;
+        }
+        function Convertir(){
+            let numeroInput = document.getElementById('decimalInput').value;
+            let numero = parseFloat(numeroInput);
+            let result= decimaltobinary(numero);
+            let result2=decimalhexa(numero);
+            //binario
+            document.getElementById('ieeeResult').innerText = '';
+            document.getElementById('decimalToIEEEError').innerText = '';
+            let ieeeFormateado = result.replace(/(.{1})(.{8})(.{23})/, '$1 $2 $3');
+            document.getElementById('ieeeResult').innerText = ieeeFormateado;
+            //hexadecimal
+            document.getElementById('ieeeResult2').innerText = '';
+            document.getElementById('decimalToIEEEError2').innerText = '';
+            document.getElementById('ieeeResult2').innerText = result2;
+        }
+        function Limpiar(){
+            document.getElementById('ieeeResult').innerText = '';
+            document.getElementById('decimalToIEEEError').innerText = '';
+            document.getElementById('ieeeResult2').innerText = '';
+            document.getElementById('decimalToIEEEError2').innerText = '';
+        }
+    </script>
+</body>
+</html> 
